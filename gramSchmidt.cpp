@@ -3,25 +3,41 @@
 #include <iostream>
 #include <stdio.h>
 #include <stdlib.h>
-#include "linearalgebra.h"
+#include "../linearalgebra.h"
 
 
-void gramSchmidt (double ** a, double ** v, double ** q, int length) {
-    int i, j, k;
-    double r;
+/* ----------------------- gramSchmidt ----------------------- */
+/*  Given a matrix A of dimension n by n, this algorithm 
+    computes a QR decomposition of A, where Q is a unitary 
+    n by n matrix and R is a n by n upper triangular matrix
+    and A = QR.    
+    
+    Input variables:
+        a: pointer to array of arrays, the ith array of
+            which should correspond to the ith column of the 
+            matrix A. During the algorithm, the columns of Q 
+            will replace the columns of A.
+        r: pointer to array of arrays in which the ith 
+            column of the upper triangular matrix R will be 
+            stored in the ith subarray of r.
+        n: number of rows and columns in A.
 
-    for(i = 0; i < length; i++) {
-        vec_copy(a[i], v[i], length);
-    }
+    Features: This implementation has time complexity O(n^3)
+    and requires O(1) additional memory. 
 
-    for(i = 0; i < length; i++) {
+    Remarks: Due to the nature of the problem, if A is nearly
+    rank-deficient then the resulting columns of Q may not
+    exhibit the orthogonality property.                        */
 
-        r = norm(v[i], length);
-        scalar_mult(v[i], r, length, q[i]);
+void gramSchmidt (double ** a, double ** r, int n) {
+    int i, j;
 
-        for(j = i+1; j < length; j++) {
-            r = dot_product(q[i], v[j], length);
-            scalar_sub(q[i], r, length, v[j]);
+    for(i = 0; i < n; i++) {
+        r[i][i] = norm(a[i], n);                  // r_ii = ||a_i||
+        scalar_mult(a[i], r[i][i], n, a[i]);      // a_i = a_i/r_ii
+        for(j = i+1; j < n; j++) {
+            r[i][j] = dot_product(a[i], a[j], n); // r_ij = a_i*a_j
+            scalar_sub(a[i], r[i][j], n, a[j]);   // a_j -= r_ij q_i
         }
     }
 }
@@ -31,58 +47,71 @@ int main () {
     int i, j, n;
     double x;
 
-    n = 6;
+    /* let user set the dimension of matrix A */
+    std::cout << "Enter the dimension n (where A is a n by n matrix): ";
+    std::cin >> n;
 
+    /* allocate memory for the matrices A and R */
     double ** a = new double*[n];
-    double ** v = new double*[n];
-    double ** q = new double*[n];
-
+    double ** r = new double*[n];
     for(i = 0; i < n; i++) {
         a[i] = new double[n];
-        v[i] = new double[n];
-        q[i] = new double[n];
+        r[i] = new double[n];
     }
 
+    /* initialize the values in matrix A */
     for(i = 0; i < n; i++) {
         for(j = i; j < n; j++) {
-            a[i][j] = i + j + 1;
+            a[i][j] = j - i + 1; // this choice of values was arbitrary
         }
     }
 
+    /* print the matrix A before calling gramSchmidt */
+    std::cout << "A = " << std::endl;
+    for(i = 0; i < n; i++) {
+        for(j = 0; j < n; j++) {
+
+            printf("%9.7lg ", a[j][i]);
+        }
+        std::cout << std::endl;
+    }
+    std::cout << std::endl;
+
+    gramSchmidt(a, r, n); // execute gramSchmidt to determine QR factorization
+
+    /* print the matrix Q resulting from gramSchmidt */
+    std::cout << "Q = " << std::endl;
     for(i = 0; i < n; i++) {
         for(j = 0; j < n; j++) {
             if(a[j][i] >= 0) {
                 std::cout << " ";
             }
-            std::cout << a[j][i] << " ";
+            printf("%9.7lg ", a[j][i]);
         }
         std::cout << std::endl;
     }
-
     std::cout << std::endl;
 
-    gramSchmidt(a, v, q, n);
-
+    /* print the matrix R resulting from gramSchmidt */
+    std::cout << "R = " << std::endl;
     for(i = 0; i < n; i++) {
         for(j = 0; j < n; j++) {
-            if(q[j][i] >= 0) {
-                std::cout << " ";
-            }
-            std::cout << q[j][i] << " ";
+            printf("%9.7lg ", r[i][j]);
         }
         std::cout << std::endl;
     }
-
     std::cout << std::endl;
 
+    /* print numerical evidence that columns of Q are orthonormal */
+    printf("Numerical verification that {q_1, ..., q_%i} is an "
+           "orthonormal set:\n", n);
     for(i = 0; i < n; i++) {
         for(j = i; j < n; j++) {
-            x = dot_product(q[i], q[j], n);
-            printf("q[%i] * q[%i] = %lg\n", i, j, x);
+            x = dot_product(a[i], a[j], n);
+            printf("q_%i * q_%i = %lg\n", i + 1, j + 1, x);
         }
     }
 
-    delete[] a, v, q;
-
-    return 0;
+    delete[] a, r;  // free memory
+    return 0;       // exit main
 }

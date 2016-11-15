@@ -111,7 +111,14 @@ int main () {
             printf("q_%i * q_%i = %lg\n", i + 1, j + 1, x);
         }
     }
+    
+    /* free memory */
+    for(i = 0; i < n; i++) {
+        delete[] a[i];
+        delete[] r[i];
+    }
+    delete[] a;  
+    delete[] r;
 
-    delete[] a, r;  // free memory
     return 0;       // exit main
 }

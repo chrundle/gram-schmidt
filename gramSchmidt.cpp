@@ -34,7 +34,7 @@ void gramSchmidt (double ** a, double ** r, int n) {
 
     for(i = 0; i < n; i++) {
         r[i][i] = norm(a[i], n);                  // r_ii = ||a_i||
-        scalar_mult(a[i], r[i][i], n, a[i]);      // a_i = a_i/r_ii
+        scalar_div(a[i], r[i][i], n, a[i]);      // a_i = a_i/r_ii
         for(j = i+1; j < n; j++) {
             r[i][j] = dot_product(a[i], a[j], n); // r_ij = a_i*a_j
             scalar_sub(a[i], r[i][j], n, a[j]);   // a_j -= r_ij q_i
